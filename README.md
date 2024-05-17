@@ -83,15 +83,10 @@ The Telegram bot also needs admin perms!
 You will need the channel_id of your Telegram channel, too.
 I got mine by forwarding a message from my channel to the @JsonDumpBot bot.
 
-## Channels and adding more channels
+## Adding more channels
 
-You can cast into a channel if you type "/" followed by a channel name AFTER you have added the channel to the channel_mapping.
+To add more channels, head into the bot.py code and add channels to CHANNEL_MAP.
 
-For example, if you want to cast "Hello World" into the /gaming channel, you type the following into your Telegram channel:
-
-/gaming Hello World
-
-To add more channels, head into the script.py code and add channels to the channel_mapping.
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
