@@ -28,6 +28,8 @@ For example, if you want to cast "Hello World" into the /farcaster channel, you'
 
 ```/farcaster Hello World```
 
+Of course the /farcaster will be ignored for the actual cast! The actual would be just "Hello World" inside /farcaster.
+
 ## Requirements
 
 - Python 3.x
