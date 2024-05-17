@@ -30,15 +30,15 @@ I am truly bad at programming and barely know anything, I've used ChatGPT 4o to 
 ```
 
 3.  **Install the required dependencies:**
-```pip install -r requirements.txt```
+
+```
+pip install -r requirements.txt
+```
 
 4. **Create a .env file:**
 
 ```
-
     cp .env.template .env
-
-  
 
     Fill in the .env file with your own credentials.
 ```
@@ -46,7 +46,6 @@ I am truly bad at programming and barely know anything, I've used ChatGPT 4o to 
 5. **Run the bot:**
 
 ```
-
     python bot.py
 ```
 
