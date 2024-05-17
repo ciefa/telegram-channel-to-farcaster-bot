@@ -40,8 +40,7 @@ Of course the /farcaster will be ignored for the actual cast! The actual would b
   
 1. **Clone the repository**:
 
-```sh
-
+```
    git clone https://github.com/ciefa/telegram-channel-to-farcaster-bot.git
 
    cd telegram-channel-to-farcaster-bot
@@ -49,7 +48,8 @@ Of course the /farcaster will be ignored for the actual cast! The actual would b
 
 2. **Create a virtual environment and activate it (optional but recommended):**
 
-```python -m venv venv
+```
+    python -m venv venv
 
     source venv/bin/activate   # On Windows: venv\Scripts\activate
 ```
