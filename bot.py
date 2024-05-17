@@ -37,7 +37,11 @@ CHANNEL_MAP = {
     "sonata": "sonata",
     "replyguys": "replyguys",
     "history": "history",
-    "farcaster": "farcaster"
+    "farcaster": "farcaster",
+    "dev": "dev",
+    "ethereum": "ethereum",
+    "base": "base",
+    "degen": "degen"
     # Add more channels here as needed
 }
 

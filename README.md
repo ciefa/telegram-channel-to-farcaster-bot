@@ -4,7 +4,9 @@ This project monitors a specified Telegram channel and posts messages from that 
 
 Important note:
 
-I am truly bad at programming and barely know anything, I've used ChatGPT 4o to help me create this script.
+I am truly bad/new at programming and barely know anything, I've used ChatGPT 4o to help me create this script.
+
+This is probably not the best/most efficient way to do it, but it works for me so.. ¯\_(ツ)_/¯
 
 To get an idea what this does, feel free to check out my Telegram channel and my Farcaster channel:
 
@@ -13,6 +15,18 @@ To get an idea what this does, feel free to check out my Telegram channel and my
 [Farcaster](https://warpcast.com/~/channel/ciefascorner)
 
 As you can see, whatever I post in my TG channel will be relayed to my Farcaster channel.
+
+## Usage
+
+You write a message in your Telegram channel and it will automatically be casted on Farcaster.
+If you do not specify a channel, it'll default to the default channel specified in the .env.
+Right now it's set to /replyguys.
+
+If you want to have your Telegram channel message casted into a specific channel, type the channel name with a / in front of it first.
+
+For example, if you want to cast "Hello World" into the /farcaster channel, you'd write the following in your Telegram channel:
+
+```/farcaster Hello World```
 
 ## Requirements
 
