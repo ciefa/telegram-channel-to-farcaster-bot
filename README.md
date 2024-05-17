@@ -9,6 +9,7 @@ I am truly bad at programming and barely know anything, I've used ChatGPT 4o to 
 To get an idea what this does, feel free to check out my Telegram channel and my Farcaster channel:
 
 [Telegram](https://t.me/ciefascorner)
+
 [Farcaster](https://warpcast.com/~/channel/ciefascorner)
 
 As you can see, whatever I post in my TG channel will be relayed to my Farcaster channel.
