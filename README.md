@@ -42,9 +42,9 @@ Of course the /farcaster will be ignored for the actual cast! The actual would b
 
 ```sh
 
-   git clone https://github.com/yourusername/your-repo-name.git
+   git clone https://github.com/ciefa/telegram-channel-to-farcaster-bot.git
 
-   cd your-repo-name
+   cd telegram-channel-to-farcaster-bot
 ```
 
 2. **Create a virtual environment and activate it (optional but recommended):**
