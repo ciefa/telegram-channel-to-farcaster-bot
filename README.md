@@ -87,6 +87,12 @@ I got mine by forwarding a message from my channel to the @JsonDumpBot bot.
 
 To add more channels, head into the bot.py code and add channels to CHANNEL_MAP.
 
+## Support
+
+If you have problems or questions, please feel free to hit me up on Farcaster!
+
+[farcaster.id](https://www.farcaster.id/ciefa.eth)
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
