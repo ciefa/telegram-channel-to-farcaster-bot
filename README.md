@@ -6,7 +6,7 @@ Important note:
 
 I am truly bad/new at programming and barely know anything, I've used ChatGPT 4o to help me create this script.
 
-This is probably not the best/most efficient way to do it, but it works for me so.. ¯\_(ツ)_/¯
+This is probably not the best/most efficient way to do it, but it works for me so.. `¯\_(ツ)_/¯`
 
 To get an idea what this does, feel free to check out my Telegram channel and my Farcaster channel:
 
