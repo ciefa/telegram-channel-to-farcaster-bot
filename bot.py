@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import asyncio
 from telegram import Update
@@ -20,7 +21,6 @@ try:
     BOT_TOKEN = get_env_variable('BOT_TOKEN')
     FARCASTER_API_KEY = get_env_variable('FARCASTER_API_KEY')
     SIGNER_UUID = get_env_variable('SIGNER_UUID')
-    #PARENT_AUTHOR_FID = int(get_env_variable('PARENT_AUTHOR_FID'))
     DEFAULT_CHANNEL_ID = get_env_variable('DEFAULT_CHANNEL_ID')
 except EnvironmentError as e:
     print(e)
@@ -44,6 +44,9 @@ CHANNEL_MAP = {
     "degen": "degen"
     # Add more channels here as needed
 }
+
+# Regular expression to find URLs
+URL_REGEX = r'(https?://[^\s]+)'
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.channel_post
@@ -71,16 +74,28 @@ async def process_message(message_text: str) -> None:
         print(f"Error: Message exceeds {MAX_CAST_LENGTH} characters and will not be sent to Farcaster.")
         return
 
-    print(f"Posting to channel: {channel_id}")
-    await send_to_farcaster(message_text, channel_id)
+    # Find URLs in the message text
+    urls = re.findall(URL_REGEX, message_text)
+    if urls:
+        embeds = [{"url": url} for url in urls]
+        # Remove URLs from the message text
+        for url in urls:
+            message_text = message_text.replace(url, "").strip()
+    else:
+        embeds = []
 
-async def send_to_farcaster(message_text: str, channel_id: str) -> None:
+    print(f"Posting to channel: {channel_id}")
+    await send_to_farcaster(message_text, channel_id, embeds)
+
+async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) -> None:
     # Send the message to Farcaster using the Farcaster API
     payload = {
         "text": message_text,
         "channel_id": channel_id,
         "signer_uuid": SIGNER_UUID
     }
+    if embeds:
+        payload["embeds"] = embeds
     headers = {
         "accept": "application/json",
         "api_key": FARCASTER_API_KEY,
