@@ -14,40 +14,41 @@ I am truly bad at programming and barely know anything, I've used ChatGPT 4o to 
 ## Setup
   
 1. **Clone the repository**:
-   ```sh
+
+```sh
 
    git clone https://github.com/yourusername/your-repo-name.git
 
    cd your-repo-name
+```
 
-   ```
 2. **Create a virtual environment and activate it (optional but recommended):**
-    ```python -m venv venv
+
+```python -m venv venv
 
     source venv/bin/activate   # On Windows: venv\Scripts\activate
+```
 
-    ```
 3.  **Install the required dependencies:**
-    ```
+```pip install -r requirements.txt```
 
-    pip install -r requirements.txt
+4. **Create a .env file:**
 
-    ```
-4. **Create a .env file:**    ```
-   ```
+```
 
     cp .env.template .env
 
   
 
     Fill in the .env file with your own credentials.
-    ```
+```
     
 5. **Run the bot:**
-    ```
+
+```
 
     python bot.py
-    ```
+```
 
 ## Important Information
 
