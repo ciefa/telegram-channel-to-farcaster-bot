@@ -1,4 +1,4 @@
-# Telegram to Farcaster Bot
+# Telegram Channel To Farcaster Bot
 
 This project monitors a specified Telegram channel and posts messages from that channel to the Farcaster social network.
 
