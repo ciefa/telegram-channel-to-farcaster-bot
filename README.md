@@ -57,7 +57,7 @@ Of course the /farcaster will be ignored for the actual cast! The actual would b
 3.  **Install the required dependencies:**
 
 ```
-pip install -r requirements.txt
+    pip install -r requirements.txt
 ```
 
 4. **Create a .env file:**
