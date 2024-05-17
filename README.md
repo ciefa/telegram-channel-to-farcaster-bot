@@ -5,6 +5,14 @@ This project monitors a specified Telegram channel and posts messages from that 
 Important note:
 
 I am truly bad at programming and barely know anything, I've used ChatGPT 4o to help me create this script.
+
+To get an idea what this does, feel free to check out my Telegram channel and my Farcaster channel:
+
+[Telegram](https://t.me/ciefascorner)
+[Farcaster](https://warpcast.com/~/channel/ciefascorner)
+
+As you can see, whatever I post in my TG channel will be relayed to my Farcaster channel.
+
 ## Requirements
 
 - Python 3.x
