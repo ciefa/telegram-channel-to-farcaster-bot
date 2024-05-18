@@ -108,6 +108,9 @@ async def process_message_and_photo(message, text_content: str) -> None:
         if image_url:
             embeds.append({"url": image_url})
 
+        # Delete the local file after processing
+        await delete_local_file(local_file_path)
+
     print(f"Posting to channel: {channel_id}")
     await send_to_farcaster(text_content, channel_id, embeds)
 
@@ -125,6 +128,9 @@ async def process_photo(message) -> None:
     if image_url:
         # Prepare the Farcaster cast with the image URL embedded
         await send_to_farcaster("", DEFAULT_CHANNEL_ID, [{"url": image_url}])
+
+    # Delete the local file after processing
+    await delete_local_file(local_file_path)
 
 async def download_image(file_url: str) -> str:
     local_filename = file_url.split('/')[-1]
@@ -154,6 +160,13 @@ async def upload_image_to_imgur(file_path: str) -> str:
     else:
         print(f"Failed to upload image: {response.text}")
         return None
+
+async def delete_local_file(file_path: str) -> None:
+    try:
+        os.remove(file_path)
+        print(f"Local file deleted: {file_path}")
+    except Exception as e:
+        print(f"Error deleting local file: {e}")
 
 async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) -> None:
     # Send the message to Farcaster using the Farcaster API
