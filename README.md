@@ -30,7 +30,7 @@ For example, if you want to cast "Hello World" into the /farcaster channel, you'
 
 Of course the /farcaster will be ignored for the actual cast! The actual would be just "Hello World" inside /farcaster.
 
-You can also post images into the Telegram channel and they will be casted as well. 
+You can also post images into the Telegram channel and they will be casted as well.
 
 ## Images
 
@@ -47,6 +47,7 @@ The image url is then added to the embed part of the payload.
 - python-dotenv
 - python-telegram-bot
 - requests
+
 ## Setup
   
 1. **Clone the repository**:
@@ -78,7 +79,7 @@ The image url is then added to the embed part of the payload.
 
     Fill in the .env file with your own credentials.
 ```
-    
+
 5. **Run the bot:**
 
 ```
@@ -109,6 +110,7 @@ If you have problems or questions, please feel free to hit me up on Farcaster!
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
+
 ## License
 
 [MIT](https://github.com/ciefa/telegram-channel-to-farcaster-bot/blob/main/LICENSE)
