@@ -46,7 +46,22 @@ CHANNEL_MAP = {
     "degen": "degen",
     "travel": "travel",
     "ai": "ai",
-    "crypto": "crypto"
+    "crypto": "crypto",
+    "alfafrens": "alfafrens",
+    "base": "base",
+    "adhd": "adhd",
+    "nova": "nova",
+    "cypher": "cypher",
+    "ens": "ens",
+    "ethrd": "ethrd",
+    "evm": "evm",
+    "europe": "europe",
+    "finance": "finance",
+    "fitness": "fitness",
+    "frames": "frames",
+    "founders": "founders",
+    "allotment": "allotment",
+    "gardening": "gardening"
     # Add more channels here as needed
 }
 
