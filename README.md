@@ -32,9 +32,14 @@ Of course the /farcaster will be ignored for the actual cast! The actual would b
 
 You can also post images into the Telegram channel and they will be casted as well. 
 
+## Images
+
 **IMPORTANT: To make use of this feature, you need to register for a (free) Imgur client ID. Add said ID to the .env**
 
 **Note that you HAVE TO compress the image when posting, simply click the check box "compress image" when pasting an image into your TG channel.**
+
+If you paste an image into your channel, the bot will download said image locally to then upload it to Imgur.
+The image url is then added to the embed part of the payload.
 
 ## Requirements
 
