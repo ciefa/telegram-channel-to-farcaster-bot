@@ -30,6 +30,12 @@ For example, if you want to cast "Hello World" into the /farcaster channel, you'
 
 Of course the /farcaster will be ignored for the actual cast! The actual would be just "Hello World" inside /farcaster.
 
+You can also post images into the Telegram channel and they will be casted as well. 
+
+**IMPORTANT: To make use of this feature, you need to register for a (free) Imgur client ID. Add said ID to the .env**
+
+**Note that you HAVE TO compress the image when posting, simply click the check box "compress image" when pasting an image into your TG channel.**
+
 ## Requirements
 
 - Python 3.x
