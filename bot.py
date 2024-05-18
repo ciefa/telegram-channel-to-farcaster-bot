@@ -41,7 +41,9 @@ CHANNEL_MAP = {
     "dev": "dev",
     "ethereum": "ethereum",
     "base": "base",
-    "degen": "degen"
+    "degen": "degen",
+    "travel": "travel",
+    "ai": "ai"
     # Add more channels here as needed
 }
 
