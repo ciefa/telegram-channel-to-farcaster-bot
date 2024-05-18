@@ -131,11 +131,14 @@ async def process_message_and_photo(message, text_content: str, context: Context
         embeds.append({"url": image_url})
 
     # Include up to two URLs from the text, ensuring the total number of embeds does not exceed 2
-    for url in urls[:2 - len(embeds)]:
-        embeds.append({"url": url})
+    for url in urls:
+        if len(embeds) < 2:
+            embeds.append({"url": url})
+        else:
+            print(f"Skipping URL due to embed limit: {url}")
 
-    if len(urls) > 2 - len(embeds):
-        print(f"Image and URL posted, but {len(urls) - (2 - len(embeds))} URL(s) had to be skipped due to the limit of 2 embeds in the API.")
+    if len(embeds) > 2:
+        print(f"Image and URL posted, but {len(embeds) - 2} URL(s) had to be skipped due to the limit of 2 embeds in the API.")
 
     cast_hash = await send_to_farcaster(text_content, channel_id, embeds)
 
@@ -211,7 +214,6 @@ async def delete_local_file(file_path: str) -> None:
     try:
         os.remove(file_path)
         print(f"Local file deleted: {file_path}")
-        print("=" * 40)
     except Exception as e:
         print(f"Error deleting local file: {e}")
 
