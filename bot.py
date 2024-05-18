@@ -2,7 +2,7 @@ import os
 import re
 import requests
 import asyncio
-from telegram import Update
+from telegram import Update, InputFile
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
 
@@ -22,11 +22,13 @@ try:
     FARCASTER_API_KEY = get_env_variable('FARCASTER_API_KEY')
     SIGNER_UUID = get_env_variable('SIGNER_UUID')
     DEFAULT_CHANNEL_ID = get_env_variable('DEFAULT_CHANNEL_ID')
+    IMGUR_CLIENT_ID = get_env_variable('IMGUR_CLIENT_ID')
 except EnvironmentError as e:
     print(e)
     exit(1)
 
 FARCASTER_URL = "https://api.neynar.com/v2/farcaster/cast"  # Farcaster API endpoint
+IMGUR_UPLOAD_URL = "https://api.imgur.com/3/image"  # Imgur API endpoint
 MAX_CAST_LENGTH = 320  # Maximum allowed character length for a Farcaster cast
 
 # Mapping of Telegram command prefixes to Farcaster channel IDs
@@ -54,10 +56,14 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     message = update.channel_post
     if message:
         print("Message in channel noticed!")
-        print(f"New message in the channel: {message.text}")
-
-        # Process the message (send to Farcaster)
-        await process_message(message.text)
+        if message.text:
+            print(f"New message in the channel: {message.text}")
+            # Process the text message (send to Farcaster)
+            await process_message(message.text)
+        elif message.photo:
+            print("New photo in the channel.")
+            # Process the photo message (upload to Imgur and send to Farcaster)
+            await process_photo(message)
 
 async def process_message(message_text: str) -> None:
     # Determine the Farcaster channel based on the prefix in the message
@@ -88,6 +94,50 @@ async def process_message(message_text: str) -> None:
 
     print(f"Posting to channel: {channel_id}")
     await send_to_farcaster(message_text, channel_id, embeds)
+
+async def process_photo(message) -> None:
+    photo = message.photo[-1]  # Get the highest resolution photo
+    file = await photo.get_file()
+    file_path = file.file_path
+
+    # Download the image locally
+    local_file_path = await download_image(file_path)
+
+    # Upload the image to Imgur
+    image_url = await upload_image_to_imgur(local_file_path)
+
+    if image_url:
+        # Prepare the Farcaster cast with the image URL embedded
+        await send_to_farcaster("", DEFAULT_CHANNEL_ID, [{"url": image_url}])
+
+async def download_image(file_url: str) -> str:
+    local_filename = file_url.split('/')[-1]
+    local_file_path = os.path.join(os.getcwd(), local_filename)
+    response = await asyncio.to_thread(requests.get, file_url)
+    
+    if response.status_code == 200:
+        with open(local_file_path, 'wb') as file:
+            file.write(response.content)
+        print(f"Image downloaded successfully: {local_file_path}")
+        return local_file_path
+    else:
+        print(f"Failed to download image: {response.text}")
+        return None
+
+async def upload_image_to_imgur(file_path: str) -> str:
+    headers = {
+        "Authorization": f"Client-ID {IMGUR_CLIENT_ID}"
+    }
+    with open(file_path, 'rb') as image_file:
+        response = await asyncio.to_thread(requests.post, IMGUR_UPLOAD_URL, headers=headers, files={'image': image_file})
+    
+    if response.status_code == 200:
+        image_url = response.json()['data']['link']
+        print(f"Image uploaded successfully: {image_url}")
+        return image_url
+    else:
+        print(f"Failed to upload image: {response.text}")
+        return None
 
 async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) -> None:
     # Send the message to Farcaster using the Farcaster API
