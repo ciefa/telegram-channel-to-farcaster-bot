@@ -56,44 +56,60 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     message = update.channel_post
     if message:
         print("Message in channel noticed!")
-        if message.text:
-            print(f"New message in the channel: {message.text}")
-            # Process the text message (send to Farcaster)
-            await process_message(message.text)
+        if message.text or message.caption:
+            text_content = message.text or message.caption
+            print(f"New message in the channel: {text_content}")
+            # Process the text and/or photo message (send to Farcaster)
+            await process_message_and_photo(message, text_content)
         elif message.photo:
             print("New photo in the channel.")
             # Process the photo message (upload to Imgur and send to Farcaster)
             await process_photo(message)
 
-async def process_message(message_text: str) -> None:
+async def process_message_and_photo(message, text_content: str) -> None:
     # Determine the Farcaster channel based on the prefix in the message
     channel_id = DEFAULT_CHANNEL_ID
-    if message_text.startswith('/'):
-        split_message = message_text.split(' ', 1)
+    if text_content.startswith('/'):
+        split_message = text_content.split(' ', 1)
         prefix = split_message[0][1:]
         if prefix in CHANNEL_MAP:
             channel_id = CHANNEL_MAP[prefix]
-            message_text = split_message[1] if len(split_message) > 1 else ""
+            text_content = split_message[1] if len(split_message) > 1 else ""
         else:
             print(f"Unknown channel prefix: {prefix}. Defaulting to {DEFAULT_CHANNEL_ID}.")
 
     # Check message length
-    if len(message_text) > MAX_CAST_LENGTH:
+    if len(text_content) > MAX_CAST_LENGTH:
         print(f"Error: Message exceeds {MAX_CAST_LENGTH} characters and will not be sent to Farcaster.")
         return
 
-    # Find URLs in the message text
-    urls = re.findall(URL_REGEX, message_text)
+    # Find URLs in the text content
+    urls = re.findall(URL_REGEX, text_content)
     if urls:
         embeds = [{"url": url} for url in urls]
-        # Remove URLs from the message text
+        # Remove URLs from the text content
         for url in urls:
-            message_text = message_text.replace(url, "").strip()
+            text_content = text_content.replace(url, "").strip()
     else:
         embeds = []
 
+    if message.photo:
+        # Process the photo message (upload to Imgur and send to Farcaster)
+        photo = message.photo[-1]  # Get the highest resolution photo
+        file = await photo.get_file()
+        file_path = file.file_path
+
+        # Download the image locally
+        local_file_path = await download_image(file_path)
+
+        # Upload the image to Imgur
+        image_url = await upload_image_to_imgur(local_file_path)
+
+        if image_url:
+            embeds.append({"url": image_url})
+
     print(f"Posting to channel: {channel_id}")
-    await send_to_farcaster(message_text, channel_id, embeds)
+    await send_to_farcaster(text_content, channel_id, embeds)
 
 async def process_photo(message) -> None:
     photo = message.photo[-1]  # Get the highest resolution photo
