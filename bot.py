@@ -54,20 +54,33 @@ CHANNEL_MAP = {
 URL_REGEX = r'(https?://[^\s]+)'
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    message = update.channel_post
-    if message:
-        print("Message in channel noticed!")
-        if message.text or message.caption:
-            text_content = message.text or message.caption
-            print(f"New message in the channel: {text_content}")
-            # Process the text and/or photo message (send to Farcaster)
-            await process_message_and_photo(message, text_content)
-        elif message.photo:
-            print("New photo in the channel.")
-            # Process the photo message (upload to Imgur and send to Farcaster)
-            await process_photo(message)
+    if update.channel_post:
+        message = update.channel_post
+        text_content = message.text or message.caption or ""
 
-async def process_message_and_photo(message, text_content: str) -> None:
+        print("\n" + "=" * 40)
+        print(f"Message in channel noticed!\nNew message in the channel: {text_content}")
+        print("=" * 40)
+
+        # Check if the message is a delete command
+        if text_content.lower().startswith("/delete"):
+            command_parts = text_content.split(' ')
+            if len(command_parts) == 2:
+                cast_hash = command_parts[1]
+                print(f"Delete command received. Cast hash: {cast_hash}")
+                await delete_cast(cast_hash, context, message.chat_id)
+            else:
+                print("Invalid /delete command format. Usage: /delete <cast_hash>")
+            print("=" * 40)
+            return
+
+        # Process the text and/or photo message (send to Farcaster)
+        if message.text or message.caption:
+            await process_message_and_photo(message, text_content, context)
+        elif message.photo:
+            await process_photo(message, context)
+
+async def process_message_and_photo(message, text_content: str, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Determine the Farcaster channel based on the prefix in the message
     channel_id = DEFAULT_CHANNEL_ID
     if text_content.startswith('/'):
@@ -76,23 +89,22 @@ async def process_message_and_photo(message, text_content: str) -> None:
         if prefix in CHANNEL_MAP:
             channel_id = CHANNEL_MAP[prefix]
             text_content = split_message[1] if len(split_message) > 1 else ""
-        else:
-            print(f"Unknown channel prefix: {prefix}. Defaulting to {DEFAULT_CHANNEL_ID}.")
 
     # Check message length
     if len(text_content) > MAX_CAST_LENGTH:
         print(f"Error: Message exceeds {MAX_CAST_LENGTH} characters and will not be sent to Farcaster.")
+        print("=" * 40)
         return
 
     # Find URLs in the text content
     urls = re.findall(URL_REGEX, text_content)
-    if urls:
-        embeds = [{"url": url} for url in urls]
-        # Remove URLs from the text content
-        for url in urls:
-            text_content = text_content.replace(url, "").strip()
-    else:
-        embeds = []
+    embeds = []
+
+    # Remove URLs from the text content
+    for url in urls:
+        text_content = text_content.replace(url, "").strip()
+
+    image_url = None
 
     if message.photo:
         # Process the photo message (upload to Imgur and send to Farcaster)
@@ -100,37 +112,71 @@ async def process_message_and_photo(message, text_content: str) -> None:
         file = await photo.get_file()
         file_path = file.file_path
 
+        print(f"Downloading image locally: {file_path}")
         # Download the image locally
         local_file_path = await download_image(file_path)
 
+        print(f"Uploading image to Imgur: {local_file_path}")
         # Upload the image to Imgur
         image_url = await upload_image_to_imgur(local_file_path)
 
-        if image_url:
-            embeds.append({"url": image_url})
-
         # Delete the local file after processing
+        print(f"Deleting local file: {local_file_path}")
         await delete_local_file(local_file_path)
 
-    print(f"Posting to channel: {channel_id}")
-    await send_to_farcaster(text_content, channel_id, embeds)
+    if image_url:
+        print(f"Image uploaded successfully to Imgur. URL: {image_url}")
+        print("=" * 40)
+        # Include the image URL as a priority
+        embeds.append({"url": image_url})
 
-async def process_photo(message) -> None:
+    # Include up to two URLs from the text, ensuring the total number of embeds does not exceed 2
+    for url in urls[:2 - len(embeds)]:
+        embeds.append({"url": url})
+
+    if len(urls) > 2 - len(embeds):
+        print(f"Image and URL posted, but {len(urls) - (2 - len(embeds))} URL(s) had to be skipped due to the limit of 2 embeds in the API.")
+
+    cast_hash = await send_to_farcaster(text_content, channel_id, embeds)
+
+    # Send a message with the cast hash for easy deletion reference
+    if cast_hash:
+        print(f"Cast published successfully. Cast hash: {cast_hash}")
+        print("=" * 40)
+        await context.bot.send_message(
+            chat_id=message.chat_id,
+            text=f"Cast hash: {cast_hash}"
+        )
+
+async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
     photo = message.photo[-1]  # Get the highest resolution photo
     file = await photo.get_file()
     file_path = file.file_path
 
+    print(f"Downloading image locally: {file_path}")
     # Download the image locally
     local_file_path = await download_image(file_path)
 
+    print(f"Uploading image to Imgur: {local_file_path}")
     # Upload the image to Imgur
     image_url = await upload_image_to_imgur(local_file_path)
 
     if image_url:
+        print(f"Image uploaded successfully to Imgur. URL: {image_url}")
         # Prepare the Farcaster cast with the image URL embedded
-        await send_to_farcaster("", DEFAULT_CHANNEL_ID, [{"url": image_url}])
+        cast_hash = await send_to_farcaster("", DEFAULT_CHANNEL_ID, [{"url": image_url}])
+
+        # Send a message with the cast hash for easy deletion reference
+        if cast_hash:
+            print(f"Cast published successfully. Cast hash: {cast_hash}")
+            print("=" * 40)
+            await context.bot.send_message(
+                chat_id=message.chat_id,
+                text=f"/info Cast hash: {cast_hash}"
+            )
 
     # Delete the local file after processing
+    print(f"Deleting local file: {local_file_path}")
     await delete_local_file(local_file_path)
 
 async def download_image(file_url: str) -> str:
@@ -156,7 +202,6 @@ async def upload_image_to_imgur(file_path: str) -> str:
     
     if response.status_code == 200:
         image_url = response.json()['data']['link']
-        print(f"Image uploaded successfully: {image_url}")
         return image_url
     else:
         print(f"Failed to upload image: {response.text}")
@@ -166,10 +211,11 @@ async def delete_local_file(file_path: str) -> None:
     try:
         os.remove(file_path)
         print(f"Local file deleted: {file_path}")
+        print("=" * 40)
     except Exception as e:
         print(f"Error deleting local file: {e}")
 
-async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) -> None:
+async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) -> str:
     # Send the message to Farcaster using the Farcaster API
     payload = {
         "text": message_text,
@@ -186,20 +232,50 @@ async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) ->
     try:
         response = await asyncio.to_thread(requests.post, FARCASTER_URL, json=payload, headers=headers)
         if response.status_code == 200:
-            print("Cast published successfully")
+            response_data = response.json()
+            cast_hash = response_data.get("cast", {}).get("hash")
+            if cast_hash:
+                return cast_hash
         else:
             print(f"Failed to publish cast: {response.text}")
     except Exception as e:
         print(f"Error while sending to Farcaster: {e}")
+    return None
+
+async def delete_cast(cast_hash: str, context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+    # Delete the cast from Farcaster using the Farcaster API
+    payload = {
+        "signer_uuid": SIGNER_UUID,
+        "target_hash": cast_hash
+    }
+    headers = {
+        "accept": "application/json",
+        "api_key": FARCASTER_API_KEY,
+        "content-type": "application/json"
+    }
+    try:
+        response = await asyncio.to_thread(requests.delete, FARCASTER_URL, json=payload, headers=headers)
+        if response.status_code == 200:
+            print(f"Cast deleted successfully. Cast hash: {cast_hash}")
+            print("=" * 40)
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"Cast deleted successfully. Cast hash: {cast_hash}"
+            )
+        else:
+            print(f"Failed to delete cast: {response.text}")
+    except Exception as e:
+        print(f"Error while deleting cast: {e}")
 
 def main():
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Add handler to process channel posts
-    application.add_handler(MessageHandler(filters.UpdateType.CHANNEL_POST, message_handler))
+    # Add handler to process channel posts and messages
+    application.add_handler(MessageHandler(filters.ALL, message_handler))
 
     # Print a message indicating the bot is waiting for input
     print("Waiting for input in channel")
+    print("=" * 40)
 
     # Start the Bot
     application.run_polling()

@@ -32,6 +32,13 @@ Of course the /farcaster will be ignored for the actual cast! The actual would b
 
 You can also post images into the Telegram channel and they will be casted as well.
 
+You can also delete a cast through a message in the channel:
+
+```
+    /delete <cast_hash>
+```
+Once a cast is submitted, both the console as well as the channel will receive the cast hash.
+
 ## Images
 
 **IMPORTANT: To make use of this feature, you need to register for a (free) Imgur client ID. Add said ID to the .env**
