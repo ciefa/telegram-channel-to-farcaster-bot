@@ -28,6 +28,7 @@ except EnvironmentError as e:
     exit(1)
 
 FARCASTER_URL = "https://api.neynar.com/v2/farcaster/cast"  # Farcaster API endpoint
+FARCASTER_REACTION_URL = "https://api.neynar.com/v2/farcaster/reaction"  # Farcaster reaction API endpoint
 IMGUR_UPLOAD_URL = "https://api.imgur.com/3/image"  # Imgur API endpoint
 MAX_CAST_LENGTH = 320  # Maximum allowed character length for a Farcaster cast
 
@@ -165,6 +166,8 @@ async def process_message_and_photo(message, text_content: str, context: Context
             chat_id=message.chat_id,
             text=f"Cast hash: {cast_hash}"
         )
+        # Like the cast after it has been posted
+        await like_cast(cast_hash)
 
 async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
     photo = message.photo[-1]  # Get the highest resolution photo
@@ -192,6 +195,8 @@ async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
                 chat_id=message.chat_id,
                 text=f"/info Cast hash: {cast_hash}"
             )
+            # Like the cast after it has been posted
+            await like_cast(cast_hash)
 
     # Delete the local file after processing
     print(f"Deleting local file: {local_file_path}")
@@ -258,6 +263,27 @@ async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) ->
     except Exception as e:
         print(f"Error while sending to Farcaster: {e}")
     return None
+
+async def like_cast(cast_hash: str) -> None:
+    # Send a like to the cast using the Farcaster API
+    payload = {
+        "reaction_type": "like",
+        "signer_uuid": SIGNER_UUID,
+        "target": cast_hash
+    }
+    headers = {
+        "accept": "application/json",
+        "api_key": FARCASTER_API_KEY,
+        "content-type": "application/json"
+    }
+    try:
+        response = await asyncio.to_thread(requests.post, FARCASTER_REACTION_URL, json=payload, headers=headers)
+        if response.status_code == 200:
+            print(f"Cast liked successfully. Cast hash: {cast_hash}")
+        else:
+            print(f"Failed to like cast: {response.text}")
+    except Exception as e:
+        print(f"Error while liking cast: {e}")
 
 async def delete_cast(cast_hash: str, context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
     # Delete the cast from Farcaster using the Farcaster API
