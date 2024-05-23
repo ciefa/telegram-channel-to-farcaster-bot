@@ -166,8 +166,9 @@ async def process_message_and_photo(message, text_content: str, context: Context
             chat_id=message.chat_id,
             text=f"Cast hash: {cast_hash}"
         )
-        # Like the cast after it has been posted
-        await like_cast(cast_hash)
+        # Like the cast after it has been posted only if it's in the default channel
+        if channel_id == DEFAULT_CHANNEL_ID:
+            await like_cast(cast_hash)
 
 async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
     photo = message.photo[-1]  # Get the highest resolution photo
@@ -195,7 +196,7 @@ async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
                 chat_id=message.chat_id,
                 text=f"/info Cast hash: {cast_hash}"
             )
-            # Like the cast after it has been posted
+            # Like the cast after it has been posted only if it's in the default channel
             await like_cast(cast_hash)
 
     # Delete the local file after processing
