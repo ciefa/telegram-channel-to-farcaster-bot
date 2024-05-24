@@ -23,6 +23,7 @@ try:
     SIGNER_UUID = get_env_variable('SIGNER_UUID')
     DEFAULT_CHANNEL_ID = get_env_variable('DEFAULT_CHANNEL_ID')
     IMGUR_CLIENT_ID = get_env_variable('IMGUR_CLIENT_ID')
+    AUTO_LIKE_CHANNELS = get_env_variable('AUTO_LIKE_CHANNELS').split(',')
 except EnvironmentError as e:
     print(e)
     exit(1)
@@ -167,8 +168,8 @@ async def process_message_and_photo(message, text_content: str, context: Context
             chat_id=message.chat_id,
             text=f"Cast hash: {cast_hash}"
         )
-        # Like the cast after it has been posted only if it's in the default channel
-        if channel_id == DEFAULT_CHANNEL_ID:
+        # Like the cast after it has been posted if it's in the auto_like_channels
+        if channel_id in AUTO_LIKE_CHANNELS:
             await like_cast(cast_hash)
 
 async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -197,8 +198,9 @@ async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
                 chat_id=message.chat_id,
                 text=f"/info Cast hash: {cast_hash}"
             )
-            # Like the cast after it has been posted only if it's in the default channel
-            await like_cast(cast_hash)
+            # Like the cast after it has been posted if it's in the auto_like_channels
+            if DEFAULT_CHANNEL_ID in AUTO_LIKE_CHANNELS:
+                await like_cast(cast_hash)
 
     # Delete the local file after processing
     print(f"Deleting local file: {local_file_path}")
