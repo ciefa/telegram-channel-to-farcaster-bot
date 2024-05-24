@@ -62,7 +62,8 @@ CHANNEL_MAP = {
     "frames": "frames",
     "founders": "founders",
     "allotment": "allotment",
-    "gardening": "gardening"
+    "gardening": "gardening",
+    "speedymusic": "speedymusic"
     # Add more channels here as needed
 }
 
