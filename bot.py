@@ -64,7 +64,8 @@ CHANNEL_MAP = {
     "founders": "founders",
     "allotment": "allotment",
     "gardening": "gardening",
-    "speedymusic": "speedymusic"
+    "speedymusic": "speedymusic",
+    "vocaloid": "vocaloid"
     # Add more channels here as needed
 }
 
