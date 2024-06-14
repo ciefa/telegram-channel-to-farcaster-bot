@@ -91,11 +91,16 @@ The image url is then added to the embed part of the payload.
 
 ```
     python bot.py
+    python server.py
 ```
 
 ## Important Information
 
 Make sure that your Telegram bot is inside the Telegram channel from where you want to cast from.
+
+The bot is now using a Flask server, so you can deploy this project easily on something like Replit.
+
+If you do so, make sure to NOT use .env and instead use the Secrets system that Replit has in place!
 
 The Telegram bot also needs admin perms!
 

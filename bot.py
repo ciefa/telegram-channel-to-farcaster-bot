@@ -1,3 +1,4 @@
+import nest_asyncio
 import os
 import re
 import requests
@@ -5,16 +6,24 @@ import asyncio
 from telegram import Update, InputFile
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
+import threading
+from flask import Flask
+
+# Apply nest_asyncio
+nest_asyncio.apply()
 
 # Load environment variables from .env file
 load_dotenv()
+
 
 # Function to get environment variables with error handling
 def get_env_variable(var_name):
     value = os.getenv(var_name)
     if value is None:
-        raise EnvironmentError(f"Required environment variable '{var_name}' not found.")
+        raise EnvironmentError(
+            f"Required environment variable '{var_name}' not found.")
     return value
+
 
 try:
     # Get environment variables
@@ -34,8 +43,6 @@ IMGUR_UPLOAD_URL = "https://api.imgur.com/3/image"  # Imgur API endpoint
 MAX_CAST_LENGTH = 320  # Maximum allowed character length for a Farcaster cast
 
 # Mapping of Telegram command prefixes to Farcaster channel IDs
-# Since we are using Neynar API, we can specify channel just by what they're called on Farcaster.
-# For example, the channel /history would be "history": "history"
 CHANNEL_MAP = {
     "gaming": "gaming",
     "sonata": "sonata",
@@ -72,13 +79,17 @@ CHANNEL_MAP = {
 # Regular expression to find URLs
 URL_REGEX = r'(https?://[^\s]+)'
 
-async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+async def message_handler(update: Update,
+                          context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.channel_post:
         message = update.channel_post
         text_content = message.text or message.caption or ""
 
         print("\n" + "=" * 40)
-        print(f"Message in channel noticed!\nNew message in the channel: {text_content}")
+        print(
+            f"Message in channel noticed!\nNew message in the channel: {text_content}"
+        )
         print("=" * 40)
 
         # Check if the message is a delete command
@@ -89,7 +100,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 print(f"Delete command received. Cast hash: {cast_hash}")
                 await delete_cast(cast_hash, context, message.chat_id)
             else:
-                print("Invalid /delete command format. Usage: /delete <cast_hash>")
+                print(
+                    "Invalid /delete command format. Usage: /delete <cast_hash>"
+                )
             print("=" * 40)
             return
 
@@ -99,7 +112,10 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         elif message.photo:
             await process_photo(message, context)
 
-async def process_message_and_photo(message, text_content: str, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+async def process_message_and_photo(
+        message, text_content: str,
+        context: ContextTypes.DEFAULT_TYPE) -> None:
     # Determine the Farcaster channel based on the prefix in the message
     channel_id = DEFAULT_CHANNEL_ID
     if text_content.startswith('/'):
@@ -111,7 +127,9 @@ async def process_message_and_photo(message, text_content: str, context: Context
 
     # Check message length
     if len(text_content) > MAX_CAST_LENGTH:
-        print(f"Error: Message exceeds {MAX_CAST_LENGTH} characters and will not be sent to Farcaster.")
+        print(
+            f"Error: Message exceeds {MAX_CAST_LENGTH} characters and will not be sent to Farcaster."
+        )
         print("=" * 40)
         return
 
@@ -157,7 +175,9 @@ async def process_message_and_photo(message, text_content: str, context: Context
             print(f"Skipping URL due to embed limit: {url}")
 
     if len(embeds) > 2:
-        print(f"Image and URL posted, but {len(embeds) - 2} URL(s) had to be skipped due to the limit of 2 embeds in the API.")
+        print(
+            f"Image and URL posted, but {len(embeds) - 2} URL(s) had to be skipped due to the limit of 2 embeds in the API."
+        )
 
     cast_hash = await send_to_farcaster(text_content, channel_id, embeds)
 
@@ -165,13 +185,12 @@ async def process_message_and_photo(message, text_content: str, context: Context
     if cast_hash:
         print(f"Cast published successfully. Cast hash: {cast_hash}")
         print("=" * 40)
-        await context.bot.send_message(
-            chat_id=message.chat_id,
-            text=f"Cast hash: {cast_hash}"
-        )
+        await context.bot.send_message(chat_id=message.chat_id,
+                                       text=f"Cast hash: {cast_hash}")
         # Like the cast after it has been posted if it's in the auto_like_channels
         if channel_id in AUTO_LIKE_CHANNELS:
             await like_cast(cast_hash)
+
 
 async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
     photo = message.photo[-1]  # Get the highest resolution photo
@@ -189,16 +208,17 @@ async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
     if image_url:
         print(f"Image uploaded successfully to Imgur. URL: {image_url}")
         # Prepare the Farcaster cast with the image URL embedded
-        cast_hash = await send_to_farcaster("", DEFAULT_CHANNEL_ID, [{"url": image_url}])
+        cast_hash = await send_to_farcaster("", DEFAULT_CHANNEL_ID,
+                                            [{
+                                                "url": image_url
+                                            }])
 
         # Send a message with the cast hash for easy deletion reference
         if cast_hash:
             print(f"Cast published successfully. Cast hash: {cast_hash}")
             print("=" * 40)
             await context.bot.send_message(
-                chat_id=message.chat_id,
-                text=f"/info Cast hash: {cast_hash}"
-            )
+                chat_id=message.chat_id, text=f"/info Cast hash: {cast_hash}")
             # Like the cast after it has been posted if it's in the auto_like_channels
             if DEFAULT_CHANNEL_ID in AUTO_LIKE_CHANNELS:
                 await like_cast(cast_hash)
@@ -207,11 +227,12 @@ async def process_photo(message, context: ContextTypes.DEFAULT_TYPE) -> None:
     print(f"Deleting local file: {local_file_path}")
     await delete_local_file(local_file_path)
 
+
 async def download_image(file_url: str) -> str:
     local_filename = file_url.split('/')[-1]
     local_file_path = os.path.join(os.getcwd(), local_filename)
     response = await asyncio.to_thread(requests.get, file_url)
-    
+
     if response.status_code == 200:
         with open(local_file_path, 'wb') as file:
             file.write(response.content)
@@ -221,19 +242,22 @@ async def download_image(file_url: str) -> str:
         print(f"Failed to download image: {response.text}")
         return None
 
+
 async def upload_image_to_imgur(file_path: str) -> str:
-    headers = {
-        "Authorization": f"Client-ID {IMGUR_CLIENT_ID}"
-    }
+    headers = {"Authorization": f"Client-ID {IMGUR_CLIENT_ID}"}
     with open(file_path, 'rb') as image_file:
-        response = await asyncio.to_thread(requests.post, IMGUR_UPLOAD_URL, headers=headers, files={'image': image_file})
-    
+        response = await asyncio.to_thread(requests.post,
+                                           IMGUR_UPLOAD_URL,
+                                           headers=headers,
+                                           files={'image': image_file})
+
     if response.status_code == 200:
         image_url = response.json()['data']['link']
         return image_url
     else:
         print(f"Failed to upload image: {response.text}")
         return None
+
 
 async def delete_local_file(file_path: str) -> None:
     try:
@@ -242,7 +266,9 @@ async def delete_local_file(file_path: str) -> None:
     except Exception as e:
         print(f"Error deleting local file: {e}")
 
-async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) -> str:
+
+async def send_to_farcaster(message_text: str, channel_id: str,
+                            embeds: list) -> str:
     # Send the message to Farcaster using the Farcaster API
     payload = {
         "text": message_text,
@@ -257,7 +283,10 @@ async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) ->
         "content-type": "application/json"
     }
     try:
-        response = await asyncio.to_thread(requests.post, FARCASTER_URL, json=payload, headers=headers)
+        response = await asyncio.to_thread(requests.post,
+                                           FARCASTER_URL,
+                                           json=payload,
+                                           headers=headers)
         if response.status_code == 200:
             response_data = response.json()
             cast_hash = response_data.get("cast", {}).get("hash")
@@ -268,6 +297,7 @@ async def send_to_farcaster(message_text: str, channel_id: str, embeds: list) ->
     except Exception as e:
         print(f"Error while sending to Farcaster: {e}")
     return None
+
 
 async def like_cast(cast_hash: str) -> None:
     # Send a like to the cast using the Farcaster API
@@ -282,7 +312,10 @@ async def like_cast(cast_hash: str) -> None:
         "content-type": "application/json"
     }
     try:
-        response = await asyncio.to_thread(requests.post, FARCASTER_REACTION_URL, json=payload, headers=headers)
+        response = await asyncio.to_thread(requests.post,
+                                           FARCASTER_REACTION_URL,
+                                           json=payload,
+                                           headers=headers)
         if response.status_code == 200:
             print(f"Cast liked successfully. Cast hash: {cast_hash}")
         else:
@@ -290,32 +323,44 @@ async def like_cast(cast_hash: str) -> None:
     except Exception as e:
         print(f"Error while liking cast: {e}")
 
-async def delete_cast(cast_hash: str, context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+
+async def delete_cast(cast_hash: str, context: ContextTypes.DEFAULT_TYPE,
+                      chat_id: int) -> None:
     # Delete the cast from Farcaster using the Farcaster API
-    payload = {
-        "signer_uuid": SIGNER_UUID,
-        "target_hash": cast_hash
-    }
+    payload = {"signer_uuid": SIGNER_UUID, "target_hash": cast_hash}
     headers = {
         "accept": "application/json",
         "api_key": FARCASTER_API_KEY,
         "content-type": "application/json"
     }
     try:
-        response = await asyncio.to_thread(requests.delete, FARCASTER_URL, json=payload, headers=headers)
+        response = await asyncio.to_thread(requests.delete,
+                                           FARCASTER_URL,
+                                           json=payload,
+                                           headers=headers)
         if response.status_code == 200:
             print(f"Cast deleted successfully. Cast hash: {cast_hash}")
             print("=" * 40)
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"Cast deleted successfully. Cast hash: {cast_hash}"
-            )
+                text=f"Cast deleted successfully. Cast hash: {cast_hash}")
         else:
             print(f"Failed to delete cast: {response.text}")
     except Exception as e:
         print(f"Error while deleting cast: {e}")
 
-def main():
+
+def start_flask():
+    app = Flask(__name__)
+
+    @app.route('/')
+    def home():
+        return "Bot is running!"
+
+    app.run(host='0.0.0.0', port=8080)
+
+
+async def run_bot():
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Add handler to process channel posts and messages
@@ -326,7 +371,15 @@ def main():
     print("=" * 40)
 
     # Start the Bot
-    application.run_polling()
+    await application.run_polling()
 
-if __name__ == '__main__':
+
+def main():
+    # Start the Flask server in a separate thread
+    threading.Thread(target=start_flask).start()
+    # Run the Telegram bot
+    asyncio.run(run_bot())
+
+
+if __name__ == "__main__":
     main()
